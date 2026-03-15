@@ -43,13 +43,42 @@ function seedDefault() {
   state.accounts = [{
     id: uid(), name: 'IRP', investAmount: 250000, cash: 284608,
     holdings: [
-      { id: uid(), code:'381180', name:'TIGER 미국필라델피아반도체나스닥', shortName:'TIGER 반도체', risk:'위험', qty:47, avgPrice:18802, target:20 },
-      { id: uid(), code:'487230', name:'KODEX 미국AI전력핵심인프라',      shortName:'KODEX AI전력', risk:'위험', qty:78, avgPrice:14483, target:20 },
+      { id: uid(), code:'381180', name:'TIGER 미국필라델피아반도체나스닥', shortName:'TIGER 반도체',    risk:'위험', qty:47, avgPrice:18802, target:20 },
+      { id: uid(), code:'487230', name:'KODEX 미국AI전력핵심인프라',      shortName:'KODEX AI전력',   risk:'위험', qty:78, avgPrice:14483, target:20 },
       { id: uid(), code:'478150', name:'TIMEFOLIO 글로벌우주테크&방산',   shortName:'TIMEFOLIO 우주', risk:'위험', qty:90, avgPrice:17152, target:30 },
       { id: uid(), code:'251600', name:'PLUS 고배당채권혼합',             shortName:'PLUS 고배당채권', risk:'안전', qty:0,  avgPrice:0,     target:15 },
-      { id: uid(), code:'448540', name:'ACE 엔비디아채권혼합블름버그',    shortName:'ACE 엔비디아채권', risk:'안전', qty:85, avgPrice:24524, target:15 },
+      { id: uid(), code:'448540', name:'ACE 엔비디아채권혼합블름버그',    shortName:'ACE 엔비디아채권',risk:'안전', qty:85, avgPrice:24524, target:15 },
     ],
   }];
+
+  // Pre-seed demo prices (from spreadsheet screenshot, ~2024-10-02)
+  // These will be overwritten when 🔄 새로고침 is clicked
+  state.prices = {
+    '381180': { code:'381180', name:'TIGER 미국필라델피아반도체나스닥', price:30010, changeRate:'2.15',  change:630,  source:'demo' },
+    '487230': { code:'487230', name:'KODEX 미국AI전력핵심인프라',      price:20380, changeRate:'-1.08', change:-222, source:'demo' },
+    '478150': { code:'478150', name:'TIMEFOLIO 글로벌우주테크&방산',   price:22665, changeRate:'1.74',  change:388,  source:'demo' },
+    '251600': { code:'251600', name:'PLUS 고배당채권혼합',             price:15615, changeRate:'0.23',  change:36,   source:'demo' },
+    '448540': { code:'448540', name:'ACE 엔비디아채권혼합블름버그',    price:25305, changeRate:'0.61',  change:154,  source:'demo' },
+  };
+  state.lastRefresh = '데모 데이터 (새로고침으로 실시간 조회)';
+
+  // Pre-seed demo sparkline data (synthetic 30-day trend)
+  const makeTrend = (base, vol, up) => {
+    const pts = []; let p = base;
+    for (let i = 0; i < 30; i++) {
+      const drift = up ? 0.003 : -0.002;
+      p = Math.round(p * (1 + drift + (Math.random() - 0.5) * vol));
+      pts.push({ date: String(20241001 + i), close: Math.max(1, p) });
+    }
+    return pts;
+  };
+  state.charts = {
+    '381180': makeTrend(25000, 0.025, true),
+    '487230': makeTrend(17000, 0.022, true),
+    '478150': makeTrend(18000, 0.028, true),
+    '251600': makeTrend(15400, 0.008, true),
+    '448540': makeTrend(24000, 0.015, true),
+  };
   save();
 }
 function uid() { return Math.random().toString(36).slice(2,10); }
@@ -89,7 +118,11 @@ async function fetchChart(code) {
 
 function setStatus(msg) {
   const el = document.getElementById('refresh-status');
-  if (el) el.textContent = msg;
+  if (!el) return;
+  const isDemo = msg.includes('데모') || (state.lastRefresh || '').includes('데모');
+  el.innerHTML = isDemo
+    ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-weight:700;font-size:11px">📌 데모</span> ${msg}`
+    : msg;
 }
 
 // ── Calculations ───────────────────────────────────────────
@@ -447,10 +480,13 @@ function renderHoldingRow(h, accountId) {
                     title="${priceData.error}" onclick="event.stopPropagation();openBulkPrice()">⚠️ 실패</span>`;
     profitCell = `<span class="price-loading">-</span>`;
   } else {
-    const cr   = parseFloat(priceData.changeRate) || 0;
-    const pcls = cr > 0 ? 'price-up' : cr < 0 ? 'price-down' : 'price-flat';
-    const sign = cr > 0 ? '▲' : cr < 0 ? '▼' : '';
-    priceCell  = `<span class="${pcls}">${fmt(priceData.price)}원<br>
+    const cr    = parseFloat(priceData.changeRate) || 0;
+    const pcls  = cr > 0 ? 'price-up' : cr < 0 ? 'price-down' : 'price-flat';
+    const sign  = cr > 0 ? '▲' : cr < 0 ? '▼' : '';
+    const demoTag = priceData.source === 'demo'
+      ? `<sup class="manual-badge" style="background:#fef3c7;color:#92400e">샘플</sup>`
+      : '';
+    priceCell  = `<span class="${pcls}">${fmt(priceData.price)}원${demoTag}<br>
                     <span class="price-change">${sign}${Math.abs(cr).toFixed(2)}%</span></span>`;
     const plcls = h.profit >= 0 ? 'profit-pos' : 'profit-neg';
     profitCell  = `<span class="${plcls}">${h.profit >= 0 ? '+' : ''}${h.profit.toFixed(2)}%</span>`;

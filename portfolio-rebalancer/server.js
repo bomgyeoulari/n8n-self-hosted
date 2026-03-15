@@ -8,8 +8,7 @@ const PORT = process.env.PORT || 3000;
 let yahooFinance;
 try {
   yahooFinance = require('yahoo-finance2').default;
-  // Suppress validation warnings for non-critical fields
-  yahooFinance.setGlobalConfig({ validation: { logErrors: false } });
+  console.log('[info] yahoo-finance2 loaded OK');
 } catch (e) {
   console.warn('[warn] yahoo-finance2 not available:', e.message);
 }
@@ -79,13 +78,15 @@ async function fetchNaverPrice(code) {
 async function fetchYahooPrice(code) {
   if (!yahooFinance) throw new Error('yahoo-finance2 not available');
 
-  // Korean stocks: code.KS (KOSPI) or code.KQ (KOSDAQ)
-  // ETFs are generally on KOSPI
-  let result;
-  try {
-    result = await yahooFinance.quote(`${code}.KS`, {}, { validateResult: false });
-  } catch {
-    result = await yahooFinance.quote(`${code}.KQ`, {}, { validateResult: false });
+  // Korean stocks/ETFs: try KOSPI (.KS) then KOSDAQ (.KQ)
+  const symbols = [`${code}.KS`, `${code}.KQ`];
+  let result = null;
+
+  for (const sym of symbols) {
+    try {
+      result = await yahooFinance.quote(sym, { validateResult: false });
+      if (result?.regularMarketPrice) break;
+    } catch { /* try next */ }
   }
 
   if (!result || !result.regularMarketPrice) throw new Error('No price from Yahoo Finance');
@@ -95,7 +96,7 @@ async function fetchYahooPrice(code) {
     name: result.longName || result.shortName || result.symbol || '',
     price: Math.round(result.regularMarketPrice),
     change: result.regularMarketChange ? Math.round(result.regularMarketChange) : 0,
-    changeRate: result.regularMarketChangePercent
+    changeRate: result.regularMarketChangePercent != null
       ? result.regularMarketChangePercent.toFixed(2)
       : '0',
     source: 'yahoo',
@@ -148,7 +149,8 @@ app.get('/api/chart/:code', async (req, res) => {
         period1: startDate.toISOString().slice(0, 10),
         period2: endDate.toISOString().slice(0, 10),
         interval: '1d',
-      }, { validateResult: false });
+        validateResult: false,
+      });
 
       if (history && history.length > 0) {
         const points = history.map(d => ({

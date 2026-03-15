@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ETF 포트폴리오 리밸런싱</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>📊 ETF 포트폴리오 리밸런싱</h1>
+      <div class="header-actions">
+        <button id="btn-refresh" class="btn btn-primary">🔄 시세 새로고침</button>
+        <button id="btn-add-account" class="btn btn-secondary">+ 계좌 추가</button>
+        <button id="btn-bulk-price" class="btn btn-ghost">✏️ 가격 일괄 입력</button>
+        <button id="btn-export" class="btn btn-ghost">📋 내보내기</button>
+      </div>
+    </div>
+    <div id="refresh-status" class="refresh-status"></div>
+  </header>
+
+  <main id="accounts-container">
+    <!-- accounts rendered by JS -->
+  </main>
+
+  <!-- Account Modal -->
+  <div id="modal-account" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <h2 id="modal-account-title">계좌 추가</h2>
+      <div class="form-group">
+        <label>계좌명</label>
+        <input id="modal-account-name" type="text" placeholder="예: IRP, 퇴직연금" />
+      </div>
+      <div class="form-group">
+        <label>투자 금액 (월 추가 납입액, 원)</label>
+        <input id="modal-account-invest" type="number" placeholder="250000" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-cancel-account">취소</button>
+        <button class="btn btn-primary" id="btn-save-account">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Holding Modal -->
+  <div id="modal-holding" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <h2 id="modal-holding-title">종목 추가</h2>
+      <div class="form-group">
+        <label>종목 코드 (6자리)</label>
+        <div class="input-row">
+          <input id="modal-holding-code" type="text" placeholder="예: 381180" maxlength="6" />
+          <button class="btn btn-secondary btn-sm" id="btn-lookup-code">검색</button>
+        </div>
+        <div id="lookup-result" class="lookup-result"></div>
+      </div>
+      <div class="form-group">
+        <label>종목명 (간략)</label>
+        <input id="modal-holding-name" type="text" placeholder="예: TIGER 반도체" />
+      </div>
+      <div class="form-group">
+        <label>리스크 분류</label>
+        <select id="modal-holding-risk">
+          <option value="위험">위험</option>
+          <option value="안전">안전</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>보유 수량 (주)</label>
+          <input id="modal-holding-qty" type="number" placeholder="0" min="0" />
+        </div>
+        <div class="form-group">
+          <label>계좌 평단가 (원)</label>
+          <input id="modal-holding-avgprice" type="number" placeholder="0" min="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>목표 비율 (%)</label>
+        <input id="modal-holding-target" type="number" placeholder="20" min="0" max="100" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label>현재가 직접 입력 (자동 조회 실패 시, 원)</label>
+        <input id="modal-holding-manualprice" type="number" placeholder="자동 조회 시 비워두세요" min="0" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" id="btn-delete-holding" style="display:none">삭제</button>
+        <button class="btn btn-ghost" id="btn-cancel-holding">취소</button>
+        <button class="btn btn-primary" id="btn-save-holding">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Price Modal -->
+  <div id="modal-bulk-price" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box" style="max-width:500px">
+      <h2>✏️ 현재가 일괄 입력</h2>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">
+        시세 자동 조회가 안 될 때 직접 현재가를 입력하세요.
+      </p>
+      <div id="bulk-price-fields"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-cancel-bulk">취소</button>
+        <button class="btn btn-primary" id="btn-save-bulk">적용</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로그인 — ETF 리밸런싱</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, 'Noto Sans KR', sans-serif;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%; max-width: 360px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .logo { text-align: center; font-size: 36px; margin-bottom: 8px; }
+    h1 { text-align: center; font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+    .sub { text-align: center; font-size: 12px; color: #94a3b8; margin-bottom: 28px; }
+    label {
+      display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 5px;
+    }
+    input[type=password] {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid #e2e8f0; border-radius: 8px;
+      font-size: 15px; outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 20px;
+    }
+    input[type=password]:focus { border-color: #6366f1; }
+    button {
+      width: 100%; padding: 12px;
+      background: #6366f1; color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: #4f46e5; }
+    .error {
+      background: #fef2f2; color: #dc2626;
+      border: 1px solid #fecaca;
+      border-radius: 6px; padding: 9px 12px;
+      font-size: 13px; font-weight: 600;
+      margin-bottom: 16px; display: none;
+    }
+    .error.show { display: block; }
+    .hint {
+      margin-top: 16px; text-align: center;
+      font-size: 11px; color: #94a3b8; line-height: 1.6;
+    }
+    .hint code {
+      background: #f1f5f9; padding: 1px 5px;
+      border-radius: 3px; font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">📊</div>
+    <h1>ETF 리밸런싱</h1>
+    <p class="sub">비공개 포트폴리오 관리 도구</p>
+    <form method="POST" action="/login" id="form">
+      <div class="error" id="err">비밀번호가 올바르지 않습니다</div>
+      <label for="pw">비밀번호</label>
+      <input type="password" id="pw" name="password" placeholder="비밀번호 입력" autofocus autocomplete="current-password" />
+      <button type="submit">로그인</button>
+    </form>
+    <p class="hint">
+      비밀번호는 서버 실행 시 환경 변수로 설정합니다.<br>
+      <code>PORTFOLIO_PASSWORD=비밀번호 npm start</code>
+    </p>
+  </div>
+  <script>
+    // Show error if redirected with ?err=1
+    if (location.search.includes('err=1')) {
+      document.getElementById('err').classList.add('show');
+      document.getElementById('pw').value = '';
+      document.getElementById('pw').focus();
+    }
+  </script>
+</body>
+</html>

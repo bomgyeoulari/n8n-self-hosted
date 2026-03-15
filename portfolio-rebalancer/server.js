@@ -1,9 +1,28 @@
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
+const session = require('express-session');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ── Auth config ────────────────────────────────────────────
+const PASSWORD = process.env.PORTFOLIO_PASSWORD || 'rebalance1234';
+const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+
+// ── Session middleware ─────────────────────────────────────
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  },
+}));
+
+app.use(express.urlencoded({ extended: false }));
 
 let yahooFinance;
 try {
@@ -22,6 +41,41 @@ const NAVER_HEADERS = {
   'Connection': 'keep-alive',
 };
 
+// ── Auth routes ────────────────────────────────────────────
+app.get('/login', (req, res) => {
+  if (req.session.auth) return res.redirect('/');
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.post('/login', (req, res) => {
+  const { password } = req.body;
+  // Constant-time comparison to prevent timing attacks
+  const given = Buffer.from(password || '');
+  const correct = Buffer.from(PASSWORD);
+  const ok = given.length === correct.length &&
+             crypto.timingSafeEqual(given, correct);
+  if (ok) {
+    req.session.auth = true;
+    res.redirect('/');
+  } else {
+    res.redirect('/login?err=1');
+  }
+});
+
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/login'));
+});
+
+// ── Auth guard ─────────────────────────────────────────────
+function requireAuth(req, res, next) {
+  if (req.session.auth) return next();
+  if (req.path.startsWith('/api/')) return res.status(401).json({ error: '인증 필요' });
+  res.redirect('/login');
+}
+
+app.use(requireAuth);
+
+// ── Static files & JSON API (auth-gated) ──────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "korean-law": {
+      "command": "python3",
+      "args": ["-m", "src.main"],
+      "cwd": "/home/user/n8n-self-hosted/korean-law-mcp",
+      "env": {
+        "LAW_API_KEY": "yeojunghyun2"
+      }
+    }
+  }
+}
